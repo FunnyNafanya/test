@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Помощник Марафона стройности</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: phone-first single column — today's day card, daily checklist, report, then the chat bot */
+:root{
+  --bg:#f3f8f7; --surface:#ffffff; --ink:#173533; --muted:#5d7774;
+  --teal:#1f9a8c; --teal-soft:#d8efeb; --coral:#ee7a63; --coral-soft:#fde4dc; --line:#d6e5e2;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1c1b; --surface:#172826; --ink:#e4f1ef; --muted:#93aeaa;
+  --teal:#4cc4b4; --teal-soft:#1d3a37; --coral:#f39582; --coral-soft:#3a2420; --line:#27403d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1c1b; --surface:#172826; --ink:#e4f1ef; --muted:#93aeaa;
+  --teal:#4cc4b4; --teal-soft:#1d3a37; --coral:#f39582; --coral-soft:#3a2420; --line:#27403d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:600}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,6vw,34px);line-height:1.1;margin:0;color:var(--teal);text-wrap:balance}
+h1 span{color:var(--coral)}
+.sub{color:var(--muted);margin:0}
+.prog{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.bar{flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--coral));width:0;transition:width .4s}
+.days{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+.days button{font:600 14px var(--body);font-variant-numeric:tabular-nums;aspect-ratio:1;max-width:100%;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;position:relative}
+.days button.done{background:var(--teal-soft);border-color:var(--teal)}
+.days button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.days button.live::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--coral)}
+@media (max-width:420px){.days{grid-template-columns:repeat(5,1fr)}}
+.legend{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.legend b{width:8px;height:8px;border-radius:50%;background:var(--coral);display:inline-block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--teal-soft);color:var(--teal)}
+.pill.live{background:var(--coral-soft);color:var(--coral)}
+h2{font-family:var(--display);font-weight:500;font-size:20px;line-height:1.25;margin:0;text-wrap:balance}
+h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:4px 0 0;color:var(--muted)}
+.card p{margin:0}
+.task{background:var(--coral-soft);border-radius:12px;padding:12px 14px}
+.checks{display:flex;flex-direction:column;gap:2px}
+.checks label{display:flex;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.checks label:last-child{border-bottom:0}
+.checks input{width:22px;height:22px;accent-color:var(--teal);flex:none}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+.field span{font-size:13px;color:var(--muted)}
+input[type=number],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:70px;resize:vertical}
+.btn{font:600 15px var(--body);border:0;border-radius:12px;padding:12px 16px;background:var(--teal);color:#fff;cursor:pointer}
+.btn.alt{background:var(--coral)}
+.btn:focus-visible,.days button:focus-visible,.chip:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+pre.report{white-space:pre-wrap;font:14px var(--body);background:var(--bg);border:1px dashed var(--line);border-radius:12px;padding:12px;margin:0}
+.toast{font-size:13px;color:var(--teal);min-height:1em}
+/* chat */
+.chat{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding-right:4px}
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-line}
+.msg.bot{background:var(--teal-soft);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.me{background:var(--coral);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:500 13px var(--body);padding:7px 12px;border-radius:99px;border:1px solid var(--teal);background:transparent;color:var(--teal);cursor:pointer}
+.aff{font-family:var(--display);font-weight:500;font-size:18px;line-height:1.35;color:var(--teal);background:var(--teal-soft);border-radius:12px;padding:14px 16px}
+.practice{display:flex;gap:8px}
+.chip.sel{background:var(--teal);color:#fff}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.ask{display:flex;gap:8px}
+.ask input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.note{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Врач-эндокринолог Елена Чикризова</div>
+    <h1>Марафон <span>стройности</span></h1>
+    <p class="sub">30 октября – 8 ноября · 10 дней · 3 живых эфира</p>
+    <div class="prog"><div class="bar"><i id="barFill"></i></div><span id="progText">0 из 10</span></div>
+  </header>
+
+  <nav class="days" id="days" aria-label="Дни марафона"></nav>
+  <div class="legend"><b></b> день с живым эфиром</div>
+
+  <section class="card" id="dayCard" aria-live="polite"></section>
+
+  <section class="card">
+    <h2>Мой чек-лист дня</h2>
+    <div class="checks" id="checks"></div>
+    <div class="row">
+      <label class="field" for="water"><span>Вода, мл</span><input type="number" id="water" inputmode="numeric" placeholder="1800"></label>
+      <label class="field" for="steps"><span>Шаги</span><input type="number" id="steps" inputmode="numeric" placeholder="8000"></label>
+      <label class="field" for="weight"><span>Вес, кг (по желанию)</span><input type="number" id="weight" step="0.1" inputmode="decimal"></label>
+    </div>
+    <label class="field" for="feel"><span>Самочувствие, наблюдения</span><textarea id="feel" placeholder="Например: к вечеру не тянуло на сладкое"></textarea></label>
+    <div class="row">
+      <button class="btn" id="makeReport" type="button">Собрать отчёт</button>
+      <button class="btn alt" id="markDone" type="button">День выполнен</button>
+    </div>
+    <pre class="report" id="report" hidden></pre>
+    <button class="btn" id="copyReport" type="button" hidden>Скопировать отчёт для чата</button>
+    <div class="toast" id="toast"></div>
+  </section>
+
+  <section class="card">
+    <h2>Спросить помощника</h2>
+    <div class="chat" id="chat"></div>
+    <div class="chips" id="chips"></div>
+    <form class="ask" id="askForm">
+      <input id="askInput" placeholder="Например: сколько пить воды при весе 70 кг?" autocomplete="off">
+      <button class="btn" type="submit">Спросить</button>
+    </form>
+    <p class="note">Помощник отвечает по материалам марафона. Личные вопросы о здоровье, лекарствах и анализах задавайте врачу в закрытом чате. Отметки хранятся только в этом браузере.</p>
+  </section>
+</div>
+
+<script>
+const START = new Date(2026, 9, 30);
+const DAYS = [
+ {t:"Старт. Почему вес возвращается. Вода", live:"Эфир №1", d:"Пт, 30 октября",
+  txt:"Лишний вес чаще связан с гормонами, сном, стрессом и дефицитами, чем с силой воли. Жёсткие диеты замедляют обмен, и после них вес возвращается. В этом марафоне мы меняем привычки мягко и без голода.",
+  task:"Сделайте замеры: вес, талия, фото «до». Запишите цель на 10 дней: не только килограммы, а ещё сон, энергию, тягу к сладкому. Начните дневник питания. С сегодняшнего дня пьём воду: стакан тёплой воды утром и за 20–30 минут до каждого приёма пищи, женщинам около 30 мл на 1 кг веса, мужчинам около 35 мл на 1 кг веса, если врач не рекомендовал иначе."},
+ {t:"Инсулин — хранитель жира", d:"Сб, 31 октября",
+  txt:"Каждый перекус поднимает инсулин, а при высоком инсулине жир не расходуется. Частые сладкие перекусы дают скачки сахара и новую волну голода.",
+  task:"Три основных приёма пищи без перекусов, интервал 4–5 часов. Отмечайте, когда тянет на сладкое и после чего."},
+ {t:"Тарелка, на которой вес уходит без голода", d:"Вс, 1 ноября",
+  txt:"Половина тарелки — овощи, четверть — белок, четверть — сложные углеводы, плюс немного полезного жира. Такая тарелка насыщает надолго и не даёт скачков сахара.",
+  task:"Соберите 3 тарелки по правилу, сфотографируйте и выложите в чат."},
+ {t:"Белок и сытость", d:"Пн, 2 ноября",
+  txt:"Без белка уходят мышцы, падает обмен и быстрее возвращается голод. Белковый завтрак убирает вечернее переедание.",
+  task:"Белок в каждом приёме пищи: яйца, рыба, птица, творог, бобовые. Обязательно белковый завтрак."},
+ {t:"Щитовидная железа, кортизол и стресс", live:"Эфир №2", d:"Вт, 3 ноября",
+  txt:"Сниженная функция щитовидной железы замедляет обмен, а хронический стресс через кортизол откладывает жир на животе. Разбираем гормоны, которые мешают худеть, и ваши тарелки.",
+  task:"Промежуточный замер талии. Одна практика снятия стресса на 5–10 минут: дыхание или спокойная прогулка."},
+ {t:"Вода, отёки и кишечник", d:"Ср, 4 ноября",
+  txt:"Когда воды мало, организм её задерживает — отсюда отёки. Их же дают соль, алкоголь и поздний ужин. Без воды не работает клетчатка и страдает кишечник. Утренний вес может скакать на 0,5–1 кг из-за воды — это не жир.",
+  task:"Сегодня без алкоголя и сладкого, ужин не позже чем за 3 часа до сна. Добавьте горькую зелень или капусту в обед."},
+ {t:"Сон и гормоны голода", d:"Чт, 5 ноября",
+  txt:"При недосыпе растёт грелин (гормон голода) и падает лептин (гормон сытости). Поэтому после бессонной ночи тянет на сладкое и мучное.",
+  task:"Отбой до 23:00, последний приём пищи за 3 часа до сна, без экрана за час до сна."},
+ {t:"Движение без изнурения", d:"Пт, 6 ноября",
+  txt:"Для обмена важнее ежедневная активность и шаги, чем изнурительные тренировки. Мышечная работа повышает чувствительность к инсулину.",
+  task:"От 7–8 тысяч шагов в день и 10-минутный комплекс упражнений дома."},
+ {t:"Скрытые дефициты", d:"Сб, 7 ноября",
+  txt:"Нехватка железа, витамина D, B12, магния и йода даёт усталость, тягу к сладкому и тормозит обмен. Говорим о том, как распознать дефициты и восполнить их.",
+  task:"Пройдите чек-лист симптомов дефицитов. Если сдавали анализы — принесите результаты в чат для разбора."},
+ {t:"Итоги: что изменилось за 10 дней", live:"Итоговый эфир", d:"Вс, 8 ноября",
+  txt:"Финал марафона! Утром — финальные замеры и анкета «Что изменилось за 10 дней» (в канале марафона). Сравните не только килограммы: сон, энергию, тягу к сладкому, отёки. Вечером — итоговый эфир с напутствием.",
+  task:"Финальные замеры и фото «после», анкета «Что изменилось», отзыв и свой план на месяц."}
+];
+const CHECKS = [
+ ["morning","Утренняя практика 15 минут"],["water","Пила воду по плану"],["meals","3 приёма пищи без перекусов"],["plate","Собирала тарелку по правилу"],
+ ["protein","Белок в каждом приёме пищи"],["sleep","Легла спать до 23:00"],["move","Двигалась: шаги и упражнения"],["kit","Принимала набор по схеме"]
+];
+const ZAR=["Суставная разминка, 2 мин: шея, плечи, таз, колени, стопы","Ходьба на месте с высоким подниманием колен, 3 мин","Два круга, 8 мин: 10 приседаний, 10 отжиманий от стены, по 10 выпадов назад на каждую ногу, 10 «мостиков» лёжа, планка 20 сек","Растяжка и спокойное дыхание, 2 мин"];
+const MED=["Сядьте удобно с прямой спиной, закройте глаза","Дыхание, 3 мин: вдох на 4 счёта, выдох на 6","Внимание к телу, 7 мин: мысленно пройдите от макушки до стоп, отпуская напряжение","Намерение на день, 3 мин: за что вы благодарны и что сделаете сегодня для себя","Спокойное дыхание, 2 мин"];
+const AFF=["Я выбираю заботу о себе. Каждый глоток воды наполняет меня лёгкостью.", "Я ем спокойно и с удовольствием. Моё тело знает, когда оно сыто.", "Я выбираю еду, которая даёт мне силу и лёгкость.", "Мои мышцы сильные. Я даю своему телу то, что ему нужно.", "Я дышу спокойно и отпускаю напряжение. Мне безопасно расслабиться.", "Я легко отпускаю всё лишнее — в теле и в мыслях.", "Я с любовью даю себе отдых. Во сне моё тело восстанавливается.", "Я люблю двигаться. Каждый шаг делает меня сильнее и легче.", "Я слышу своё тело и бережно даю ему всё необходимое.", "Я горжусь собой. Новые привычки остаются со мной. Я — стройная, сильная и грациозная."];
+const PNOTE={4:"Сегодня особенно рекомендую медитацию: она снижает уровень кортизола.",7:"Сегодня выберите зарядку: она засчитывается в упражнения дня.",9:"Последняя практика марафона. Оставьте её себе как привычку."};
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let state = store.get("ms-state",{days:{},done:[]});
+function todayIndex(){const n=Math.floor((new Date().setHours(0,0,0,0)-START)/864e5);return Math.min(9,Math.max(0,n))}
+let cur = todayIndex();
+let pmode = store.get("ms-p","z");
+const $=id=>document.getElementById(id);
+
+function renderDays(){
+  $("days").innerHTML = DAYS.map((d,i)=>`<button type="button" aria-label="День ${i+1}" class="${i===cur?'on':''} ${state.done.includes(i)?'done':''} ${d.live?'live':''}" data-i="${i}">${i+1}</button>`).join("");
+  $("days").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;render()});
+  const n=state.done.length; $("barFill").style.width=(n*10)+"%"; $("progText").textContent=`${n} из 10`;
+}
+function renderDay(){
+  const d=DAYS[cur];
+  $("dayCard").innerHTML=`<div class="meta"><span class="pill">День ${cur+1} · ${d.d}</span>${d.live?`<span class="pill live">${d.live}</span>`:""}</div>
+  <h2>${d.t}</h2><p>${d.txt}</p><div class="aff">✨ ${AFF[cur]}</div><p class="note">Произнесите вслух 3 раза утром и перед сном.</p><h3>Задание дня</h3><div class="task">${d.task}</div>
+  <h3>Утренняя практика · 15 минут</h3>
+  <div class="practice"><button type="button" class="chip${pmode==='z'?' sel':''}" data-p="z">Зарядка</button><button type="button" class="chip${pmode==='m'?' sel':''}" data-p="m">Медитация</button></div>
+  <ol class="steps">${(pmode==='z'?ZAR:MED).map(s=>`<li>${s}</li>`).join("")}</ol>
+  <p class="note">${PNOTE[cur]||"Бодрит зарядка, успокаивает медитация. Можно чередовать."}</p>`;
+  $("dayCard").querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{pmode=b.dataset.p;store.set("ms-p",pmode);renderDay()});
+}
+function renderChecks(){
+  const ds=state.days[cur]||{};
+  $("checks").innerHTML=CHECKS.map(([k,l])=>`<label for="c-${k}"><input type="checkbox" id="c-${k}" data-k="${k}" ${ds[k]?'checked':''}>${l}</label>`).join("");
+  $("checks").querySelectorAll("input").forEach(c=>c.onchange=()=>{save(c.dataset.k,c.checked)});
+  ["water","steps","weight","feel"].forEach(f=>{$(f).value=ds[f]||"";$(f).oninput=()=>save(f,$(f).value)});
+  $("report").hidden=true;$("copyReport").hidden=true;$("toast").textContent="";
+  $("markDone").textContent=state.done.includes(cur)?"Отметка снята? Нажмите ещё раз":"День выполнен";
+}
+function save(k,v){state.days[cur]=state.days[cur]||{};state.days[cur][k]=v;store.set("ms-state",state)}
+function render(){renderDays();renderDay();renderChecks()}
+
+$("makeReport").onclick=()=>{
+  const ds=state.days[cur]||{};
+  const lines=CHECKS.map(([k,l])=>`${ds[k]?"✅":"⬜"} ${l}`);
+  let r=`#МарафонСтройности · День ${cur+1}\n${lines.join("\n")}`;
+  if(ds.water) r+=`\nВода: ${ds.water} мл`;
+  if(ds.steps) r+=`\nШаги: ${ds.steps}`;
+  if(ds.weight) r+=`\nВес: ${ds.weight} кг`;
+  if(ds.feel) r+=`\nНаблюдения: ${ds.feel}`;
+  $("report").textContent=r;$("report").hidden=false;$("copyReport").hidden=false;
+};
+$("copyReport").onclick=()=>{
+  const t=$("report").textContent;
+  const fallback=()=>{const s=window.getSelection(),rg=document.createRange();rg.selectNodeContents($("report"));s.removeAllRanges();s.addRange(rg);$("toast").textContent="Текст выделен — скопируйте его и отправьте в чат марафона"};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>$("toast").textContent="Скопировано. Отправьте отчёт в закрытый чат марафона",fallback)}else fallback();
+};
+$("markDone").onclick=()=>{
+  const i=state.done.indexOf(cur); if(i>=0) state.done.splice(i,1); else state.done.push(cur);
+  store.set("ms-state",state); renderDays(); renderChecks();
+  if(state.done.includes(cur)) $("toast").textContent=`День ${cur+1} отмечен. Отлично!`;
+};
+
+/* --- бот --- */
+const FAQ=[
+ {k:["вод","пить","жажд"],a:"Ориентир чистой воды в день: женщинам — 30 мл на 1 кг веса, мужчинам — 35 мл на 1 кг веса. Например, женщине весом 70 кг — около 2,1 л, мужчине весом 90 кг — около 3,1 л. Напишите свой вес, и я посчитаю. Если есть хронические заболевания или вы принимаете лекарства — уточните свою норму у Елены Чикризовой в личке. Стакан утром и за 20–30 минут до еды. Чай, кофе и соки в счёт воды не идут."},
+ {k:["тарел","порци","обед","ужин","еда","питан"],a:"Правило тарелки: ½ — овощи, ¼ — белок (рыба, птица, яйца, творог, бобовые), ¼ — сложные углеводы (крупы, цельнозерновой хлеб), плюс немного полезного жира. Три приёма пищи с интервалом 4–5 часов."},
+ {k:["перекус","голод","сладк","тянет"],a:"Перекусы поднимают инсулин, и жир не расходуется. Если тянет на сладкое: проверьте, хватает ли белка и воды, выспались ли вы. Помогает белковый завтрак и полноценный обед. Если голод сильный — сначала стакан воды, затем белковый продукт, а не сладкое."},
+ {k:["белок","белк","мяс","творог"],a:"Белок нужен в каждом приёме пищи: яйца, рыба, птица, мясо, творог, бобовые. Белковый завтрак помогает избежать вечернего переедания."},
+ {k:["сон","спать","высып","бессон"],a:"Ложитесь до 23:00, ужинайте за 3 часа до сна, убирайте телефон за час до сна. При недосыпе растёт гормон голода грелин, поэтому сон — часть похудения."},
+ {k:["шаг","движ","спорт","трениров","упражн"],a:"Цель — 7–8 тысяч шагов в день и 10 минут упражнений дома (приседания, отжимания от стены, планка). Изнурять себя не нужно: важна регулярность."},
+ {k:["заряд","медитац","утренн","практик","дыхан"],a:"Каждое утро — 15 минут для себя на выбор.\nЗарядка: суставная разминка 2 мин, ходьба на месте 3 мин, два круга (приседания, отжимания от стены, выпады, «мостик», планка) 8 мин, растяжка 2 мин.\nМедитация: дыхание 4/6 — 3 мин, внимание к телу — 7 мин, намерение на день — 3 мин, спокойное дыхание — 2 мин.\nПри болях в суставах, высоком давлении или головокружении выбирайте медитацию или щадящий темп."},
+ {k:["аффирм","афирм","карта"],a:null,aff:true},
+ {k:["йог","олес","шипигин","асан","растяж"],a:"Каждый день марафона — йога с Олесей Шипигиной, 15–20 минут. Видео практики выходит в канале в 12:00 по Сахалину (04:00 по Москве) — занимайтесь в любое удобное время дня. Олеся — инструктор по йоге с 15-летней практикой и консультант по клеточному питанию. Практики мягкие, подходят для любого уровня: двигаемся с удовольствием, без изнурения. Если болят суставы или спина — делайте в комфортной амплитуде и напишите Елене Чикризовой в личку."},
+ {k:["эфир","трансляц","когда"],a:"Живые эфиры: 30 октября в 20:00 по Сахалину (12:00 по Москве) — старт «Почему вес возвращается»; 3 ноября — щитовидная железа, кортизол и стресс; 8 ноября — итоги с напутствием. Ссылку доктор публикует в канале за 15 минут до начала. Записи эфиров — там же, в тот же вечер."},
+ {k:["набор","agenyz","агениз","вселенн","приём","прием","схем","шейк","мст","карбо","метафуд"],a:"Схема приёма набора «Стройность»:\n☀️ Завтрак: полноценный, с белком; IQ-МСТ powder — 1 ч. ложка (5 г) в кофе, чай или кашу.\n🍽 Обед: Слим МСТ — 2 ч. ложки на 200–300 мл воды; КарбоМинор — 1 капсула за 10–15 минут до еды; МетаФудБиом — 1 капсула до еды.\n🌙 Ужин: КарбоМинор — 1 капсула за 10–15 минут до еды; МетаФудБиом — 1 капсула до еды.\n🌛 За 1,5–2 часа до сна: Слим Альфа Шейк — 4 ст. ложки с верхом (23 г) на 250–300 мл воды или обезжиренного молока. Мицеллярный казеин 8–12 часов отдаёт аминокислоты и поддерживает мышцы ночью.\nIQ-МСТ начинайте с 1 ложки в день. Капсулы МетаФудБиома не вскрывать."},
+ {k:["анализ","ттг","ферритин","витамин","дефицит"],a:"По желанию можно сдать: ТТГ, глюкозу и инсулин натощак, ферритин, витамин D, B12. Результаты разберём в 9-й день марафона в чате."},
+ {k:["вес","стоит","не уход","плато","весы"],a:"В первые дни вес может стоять или колебаться из-за воды — это нормально. Смотрите на талию, самочувствие и тягу к сладкому. Взвешивайтесь утром натощак, не чаще раза в день."},
+ {k:["замер","талия","фото"],a:"Замеры делаем в день 1, промежуточный замер талии — в день 5, финальные замеры и фото — в день 10. Талию измеряйте утром на уровне пупка."},
+ {k:["отчёт","отчет","чат"],a:"Отметьте чек-лист дня выше, нажмите «Собрать отчёт», скопируйте его и отправьте в закрытый чат марафона."},
+ {k:["пропуст","сорвал","срыв","не получ"],a:"Срыв — не повод бросать. Просто продолжайте со следующего приёма пищи. Отметьте в отчёте, что привело к срыву: недосып, стресс или долгий перерыв в еде. Это ценная информация."},
+ {k:["задани","сегодня","день"],a:null}
+];
+const CHIPS=["Задание на сегодня","Калькуляторы","Утренняя практика","Йога с Олесей","Сколько пить воды?","Правило тарелки","Тянет на сладкое","Когда эфиры?","Вес стоит"];
+function addMsg(t,who){const m=document.createElement("div");m.className="msg "+who;m.textContent=t;$("chat").appendChild(m);$("chat").scrollTop=$("chat").scrollHeight}
+function answer(q){
+  const s=q.toLowerCase();
+  if(/(боль|кров|давлен|беремен|корм|диабет|инсулин.*укол|лекарств|таблет|температур|плохо)/.test(s))
+    return "Это вопрос для врача лично. Напишите доктору Елене Чикризовой в закрытый чат марафона. При резком ухудшении самочувствия обращайтесь за медицинской помощью.";
+  const nums=(s.match(/\d{2,3}(?:[.,]\d)?/g)||[]).map(x=>parseFloat(x.replace(",",".")));
+  const fmt=x=>String(Math.round(x*10)/10).replace(".",",");
+  if(/(калькулятор|посчита|рассчита)/.test(s)&&nums.length===0)
+    return "Я умею считать:\n💧 воду — «сколько воды при весе 70 кг» (женщинам 30 мл/кг, мужчинам 35 мл/кг);\n🥚 белок — «сколько белка при весе 70 кг»;\n⚖️ ИМТ — «ИМТ рост 165 вес 70»;\n📏 талию — «талия 82 рост 165».\nКалории на марафоне не считаем — работаем с тарелкой, белком, водой и сном.";
+  if(/белк|белок/.test(s)&&nums.length){const w=nums[0];if(w>=35&&w<=250)
+    return `При весе ${fmt(w)} кг ориентир белка — ${Math.round(w*1)}–${Math.round(w*1.2)} г в день (1–1,2 г на 1 кг). Распределите на 3 приёма пищи, по ${Math.round(w/3)}–${Math.round(w*1.2/3)} г. Вечерний Слим Альфа Шейк тоже даёт белок.`;}
+  if(/(имт|индекс массы)/.test(s)&&nums.length>=2){let h=Math.max(...nums.slice(0,2)),w=Math.min(...nums.slice(0,2));
+    const r=s.match(/рост\D{0,3}(\d{2,3})/),v=s.match(/вес\D{0,3}(\d{2,3}(?:[.,]\d)?)/);if(r)h=+r[1];if(v)w=parseFloat(v[1].replace(",","."));
+    if(h>=120&&h<=220&&w>=35&&w<=250){const b=w/((h/100)**2);const c=b<18.5?"ниже нормы":b<25?"норма":b<30?"избыточная масса тела":"ожирение";
+    return `ИМТ = ${fmt(b)} (${c}). Норма — 18,5–24,9. ИМТ не различает жир и мышцы, поэтому смотрим и на талию: напишите «талия 82 рост 165».`;}}
+  if(/тали/.test(s)&&nums.length>=2){let t=nums[0],h=nums[1];const r=s.match(/рост\D{0,3}(\d{2,3})/),tt=s.match(/тали\D{0,6}(\d{2,3})/);if(r)h=+r[1];if(tt)t=+tt[1];
+    if(h>=120&&h<=220&&t>=40&&t<=200){const k=t/h;return `Талия / рост = ${String(Math.round(k*100)/100).replace(".",",")}. ${k<0.5?"Меньше 0,5 — хорошо.":k<0.6?"От 0,5 до 0,6 — есть лишний жир на животе, работаем с ним на марафоне.":"0,6 и больше — много жира на животе, обсудите с Еленой Чикризовой в личке."} Цель — талия меньше половины роста: при росте ${h} см это до ${Math.round(h/2)} см.`;}}
+  const wm=s.match(/(\d{2,3}(?:[.,]\d)?)\s*(кг|килограмм)?/);
+  if(/(вод|пить|жажд)/.test(s)&&wm){const w=parseFloat(wm[1].replace(",","."));if(w>=35&&w<=250){
+    const f=(w*30/1000).toFixed(1).replace(".",","),m=(w*35/1000).toFixed(1).replace(".",",");
+    if(/муж/.test(s))return `При весе ${wm[1]} кг мужчине — около ${m} л чистой воды в день (35 мл на 1 кг). Пейте равномерно: стакан утром и за 20–30 минут до еды.`;
+    if(/жен/.test(s))return `При весе ${wm[1]} кг женщине — около ${f} л чистой воды в день (30 мл на 1 кг). Пейте равномерно: стакан утром и за 20–30 минут до еды.`;
+    return `При весе ${wm[1]} кг: женщине — около ${f} л воды в день (30 мл на 1 кг), мужчине — около ${m} л (35 мл на 1 кг). Пейте равномерно: стакан утром и за 20–30 минут до еды.`;}}
+  for(const f of FAQ){ if(f.k.some(k=>s.includes(k))){
+    if(f.aff){return "Аффирмация дня: "+AFF[todayIndex()]+"\nПроизносите вслух 3 раза утром и перед сном. Общая карта аффирмации «Стройность» закреплена в канале марафона."}
+    if(f.a===null){const d=DAYS[todayIndex()];return `День ${todayIndex()+1}: ${d.t}.\n${d.task}`}
+    return f.a; } }
+  return "Пока не знаю ответа на этот вопрос. Попробуйте спросить иначе или задайте его доктору в закрытом чате марафона.";
+}
+function ask(q){if(!q.trim())return;addMsg(q,"me");setTimeout(()=>addMsg(answer(q),"bot"),250)}
+$("chips").innerHTML=CHIPS.map(c=>`<button type="button" class="chip">${c}</button>`).join("");
+$("chips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>ask(c.textContent));
+$("askForm").addEventListener("submit",e=>{e.preventDefault();ask($("askInput").value);$("askInput").value=""});
+addMsg("Здравствуйте! Я помощник марафона стройности. Подскажу задание дня, правило тарелки, воду, сон и движение. Выберите вопрос или напишите свой.","bot");
+
+render();
+</script>
+
+</body>
+</html>
