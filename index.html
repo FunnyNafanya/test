@@ -193,7 +193,7 @@ function renderChecks(){
   const ds=state.days[cur]||{};
   $("checks").innerHTML=CHECKS.map(([k,l])=>`<label for="c-${k}"><input type="checkbox" id="c-${k}" data-k="${k}" ${ds[k]?'checked':''}>${l}</label>`).join("");
   $("checks").querySelectorAll("input").forEach(c=>c.onchange=()=>{save(c.dataset.k,c.checked)});
-  ["water","steps","weight","waist","mood","feel"].forEach(f=>{$(f).value=ds[f]||"";$(f).oninput=()=>save(f,$(f).value)});
+  ["water","steps","weight","waist","mood","feel"].forEach(f=>{const k="f_"+f;const v=ds[k];$(f).value=(v===undefined||typeof v==="boolean")?"":v;$(f).oninput=()=>save(k,$(f).value)});
   $("report").hidden=true;$("copyReport").hidden=true;$("toast").textContent="";
   $("markDone").textContent=state.done.includes(cur)?"Отметка снята? Нажмите ещё раз":"День выполнен";
 }
@@ -204,12 +204,12 @@ $("makeReport").onclick=()=>{
   const ds=state.days[cur]||{};
   const lines=CHECKS.map(([k,l])=>`${ds[k]?"✅":"⬜"} ${l}`);
   let r=`#МарафонСтройности · День ${cur+1}\n${lines.join("\n")}`;
-  if(ds.water) r+=`\nВода: ${ds.water} мл`;
-  if(ds.steps) r+=`\nШаги: ${ds.steps}`;
-  if(ds.weight) r+=`\nВес: ${ds.weight} кг`;
-  if(ds.waist) r+=`\nТалия: ${ds.waist} см`;
-  if(ds.mood){const o=$("mood").querySelector(`option[value="${ds.mood}"]`); r+=`\nСамочувствие: ${o?o.textContent:ds.mood}`;}
-  if(ds.feel) r+=`\nНаблюдения: ${ds.feel}`;
+  if(ds.f_water) r+=`\nВода: ${ds.f_water} мл`;
+  if(ds.f_steps) r+=`\nШаги: ${ds.f_steps}`;
+  if(ds.f_weight) r+=`\nВес: ${ds.f_weight} кг`;
+  if(ds.f_waist) r+=`\nТалия: ${ds.f_waist} см`;
+  if(ds.f_mood){const o=$("mood").querySelector(`option[value="${ds.f_mood}"]`); r+=`\nСамочувствие: ${o?o.textContent:ds.f_mood}`;}
+  if(ds.f_feel) r+=`\nНаблюдения: ${ds.f_feel}`;
   $("report").textContent=r;$("report").hidden=false;$("copyReport").hidden=false;
 };
 $("copyReport").onclick=()=>{
