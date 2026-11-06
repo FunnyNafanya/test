@@ -1,5 +1,5 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Эфир №3 · Гормоны, которые мешают худеть</title>
+<title>Эфир №3 · Итоги и как удержать вес</title>
 <style>
 :root{--bg:#0f2b33;--fg:#fff;--muted:#9fc7cf}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
@@ -23,8 +23,8 @@ const S=[
 ["efir2/09_affirm.jpg","27–30 мин · Аффирмация, вопросы, благодарность"]];
 const base=location.pathname.replace(/efir2\/?(index\.html)?$/,'');
 S.forEach(s=>{const i=new Image();i.src=base+s[0]});
-let i=0;try{i=+localStorage.getItem('efir2')||0}catch(e){}
-const show=()=>{i=Math.max(0,Math.min(S.length-1,i));img.src=base+S[i][0];cap.textContent=(i+1)+' / '+S.length+' · '+S[i][1];try{localStorage.setItem('efir2',i)}catch(e){}};
+let i=0;try{i=+localStorage.getItem('efir3')||0}catch(e){}
+const show=()=>{i=Math.max(0,Math.min(S.length-1,i));img.src=base+S[i][0];cap.textContent=(i+1)+' / '+S.length+' · '+S[i][1];try{localStorage.setItem('efir3',i)}catch(e){}};
 prev.onclick=l.onclick=()=>{i--;show()};next.onclick=r.onclick=()=>{i++;show()};
 fs.onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
 addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){i++;show()}if(['ArrowLeft','PageUp'].includes(e.key)){i--;show()}});
