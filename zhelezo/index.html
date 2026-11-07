@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Чек-лист: железо</title>
+<style>
+:root{--g:#2e9d6a;--g2:#e8f6ee;--t:#1d2b26;--m:#5b6b64;--bg:#f3faf6}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--t);line-height:1.4}
+.top{background:linear-gradient(135deg,#2e9d6a,#59c38c);color:#fff;padding:22px 16px 18px}
+.top h1{margin:0;font-size:24px}.top p{margin:6px 0 0;font-size:15px;opacity:.95}
+.wrap{max-width:560px;margin:0 auto;padding:14px 16px 40px}
+.q{display:flex;gap:12px;align-items:flex-start;background:#fff;border-radius:12px;padding:13px 14px;margin:8px 0;cursor:pointer;border:2px solid transparent;font-size:16px}
+.q input{width:22px;height:22px;accent-color:var(--g);flex:none;margin-top:1px}
+.q.on{border-color:var(--g);background:var(--g2)}
+.q small{display:block;color:var(--m);font-size:13px;margin-top:2px}
+button{width:100%;border:0;border-radius:12px;background:var(--g);color:#fff;font-size:17px;font-weight:600;padding:14px;margin-top:12px;cursor:pointer}
+button.sec{background:#fff;color:var(--g);border:2px solid var(--g)}
+#res{display:none;margin-top:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-top:10px}
+.lvl{font-size:20px;font-weight:700;margin:0 0 6px}
+.card h3{margin:0 0 6px;font-size:17px;color:var(--g)}
+.card ul{margin:0;padding-left:20px}.card li{margin:4px 0}
+.warn{background:#ffe9e3}.warn h3{color:#c2452d}
+.score{font-size:15px;color:var(--m)}
+.foot{font-size:13px;color:var(--m);margin-top:18px;text-align:center}
+</style></head><body>
+<div class="top"><h1>🩸 Хватает ли вам железа?</h1><p>Отметьте всё, что про вас, — и получите рекомендации эндокринолога</p></div>
+<div class="wrap">
+<div id="list"></div>
+<button id="go">Узнать результат</button>
+<div id="res"></div>
+<div class="foot">Чек-лист не ставит диагноз — он помогает понять, нужно ли проверить железо.<br>Врач-эндокринолог Елена Чикризова · Марафон стройности</div>
+</div>
+<script>
+const Q=[
+["Устаю даже после сна, к обеду нет сил",1],
+["Выпадают волосы, ногти ломкие и слоятся",1],
+["Мёрзнут руки и ноги",1],
+["Одышка или сердцебиение при подъёме по лестнице",1],
+["Бледная или сухая кожа, «заеды» в уголках рта",1],
+["Тянет на лёд, мел, сырую крупу, запах краски или бензина",2,"очень характерный признак"],
+["Кружится голова при резком вставании",1],
+["Неспокойные ноги вечером и ночью",1],
+["Обильные или долгие месячные (больше 7 дней)",2,"частая причина дефицита у женщин"],
+["Редко ем красное мясо, печень, рыбу",1],
+["Часто пью чай или кофе во время еды",1,"мешают усвоению железа"],
+["Были беременности, роды, донорство крови или операции за последние 2 года",1]
+];
+const RED=["Чёрный стул или кровь в стуле","Похудела без причины","Кровотечения, которые трудно остановить"];
+const L=document.getElementById('list');
+Q.forEach((q,i)=>{const d=document.createElement('label');d.className='q';d.innerHTML=`<input type="checkbox" data-w="${q[1]}"><span>${q[0]}${q[2]?`<small>${q[2]}</small>`:''}</span>`;L.appendChild(d);});
+const h=document.createElement('div');h.innerHTML='<p style="margin:16px 4px 4px;font-weight:600">Есть ли что-то из этого?</p>';L.appendChild(h);
+RED.forEach(t=>{const d=document.createElement('label');d.className='q';d.innerHTML=`<input type="checkbox" data-red="1"><span>${t}</span>`;L.appendChild(d);});
+L.addEventListener('change',e=>e.target.closest('.q').classList.toggle('on',e.target.checked));
+document.getElementById('go').onclick=()=>{
+ const ch=[...L.querySelectorAll('input:checked')];
+ const s=ch.filter(x=>x.dataset.w).reduce((a,x)=>a+ +x.dataset.w,0);
+ const red=ch.some(x=>x.dataset.red);
+ const picked=ch.map(x=>x.parentElement.querySelector('span').firstChild.textContent.trim());
+ let lvl,txt,col;
+ if(s<=2){lvl='🟢 Дефицит железа маловероятен';col='#2e9d6a';txt='Признаков немного. Поддерживайте запасы питанием и проверяйте ферритин раз в год.';}
+ else if(s<=5){lvl='🟡 Возможен скрытый дефицит железа';col='#c98a00';txt='Такое сочетание часто бывает при «пустых депо» — когда гемоглобин ещё в норме, а запасы уже на исходе.';}
+ else{lvl='🔴 Высокая вероятность дефицита железа';col='#c2452d';txt='Много признаков сразу — запасы железа, скорее всего, снижены. Важно не откладывать анализы.';}
+ let html=`<div class="card"><p class="lvl" style="color:${col}">${lvl}</p><div class="score">Баллы: ${s} из ${Q.reduce((a,q)=>a+q[1],0)}</div><p style="margin:8px 0 0">${txt}</p></div>`;
+ if(red) html+=`<div class="card warn"><h3>⚠️ Сначала — к врачу</h3>Отмеченные вами признаки требуют очной консультации в ближайшее время. Не начинайте приём железа самостоятельно.</div>`;
+ if(s>=3) html+=`<div class="card"><h3>🔬 Какие анализы сдать</h3><ul><li>Общий анализ крови</li><li><b>Ферритин</b> — показывает настоящие запасы железа</li><li>Сывороточное железо и трансферрин (ОЖСС)</li><li>Витамин B12 и ТТГ — у них похожие симптомы</li></ul></div>`;
+ html+=`<div class="card"><h3>🥩 Питание для железа</h3><ul><li>Красное мясо, печень, рыба, морепродукты — 3–4 раза в неделю</li><li>Добавляйте к ним овощи и зелень с витамином C: перец, капусту, зелень, цитрусовые</li><li>Чай и кофе — через 1–2 часа после еды, а не во время</li><li>Гречка, чечевица, тыквенные семечки — хорошее дополнение, но железо из растений усваивается хуже</li></ul></div>`;
+ if(s>=3) html+=`<div class="card"><h3>💊 Добавки</h3>Железо подбирается по анализам: избыток так же вреден, как недостаток. Пришлите мне результаты ферритина и ОАК — подберу дозу и форму. В марафоне мы говорили о ФерБусте: схему приёма подскажу после анализов.</div>`;
+ html+=`<div class="card"><h3>📩 Что дальше</h3>Нажмите «Скопировать результат» и отправьте мне в личку или напишите в комментариях, сколько баллов набрали 💚</div>
+ <button id="cp">Скопировать результат</button><button class="sec" id="again">Пройти заново</button>`;
+ const R=document.getElementById('res');R.innerHTML=html;R.style.display='block';R.scrollIntoView({behavior:'smooth'});
+ const rep=`#железо — мой результат: ${lvl.replace(/^\S+\s/,'')} (${s} из ${Q.reduce((a,q)=>a+q[1],0)})\nОтметила: ${picked.join('; ')||'ничего'}`;
+ document.getElementById('cp').onclick=async e=>{try{await navigator.clipboard.writeText(rep);e.target.textContent='Скопировано ✓';}catch(_){prompt('Скопируйте текст:',rep);}};
+ document.getElementById('again').onclick=()=>{L.querySelectorAll('input').forEach(x=>{x.checked=false;x.closest('.q').classList.remove('on')});R.style.display='none';scrollTo({top:0,behavior:'smooth'});};
+};
+</script></body></html>
