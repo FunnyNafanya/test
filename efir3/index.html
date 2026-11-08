@@ -19,9 +19,12 @@ const S=[
 ["slides/day10_final1.jpg","3–10 мин · Результаты участниц: что сравниваем"],
 ["slides/efir3_ves_vozvrat.jpg","10–17 мин · Почему вес возвращается"],
 ["slides/efir3_plan_mesyac.jpg","17–24 мин · План на месяц — 5 привычек"],
-["slides/day10_final2.jpg","24–27 мин · Устойчивый результат: что дальше"],
-["efir2/09_affirm.jpg","27–30 мин · Аффирмация, вопросы, благодарность"]];
-const base=location.pathname.replace(/efir2\/?(index\.html)?$/,'');
+["slides/jod_deficit.jpg","24–27 мин · Системный подход: йод работает в команде"],
+["slides/kalciy_deficit.jpg","27–30 мин · Кальций без D, K и магния не работает"],
+["slides/zhelezo_deficit.jpg","30–33 мин · Анемия — не только дефицит железа"],
+["slides/day10_final2.jpg","33–36 мин · Устойчивый результат: что дальше"],
+["efir2/09_affirm.jpg","36–45 мин · Аффирмация, вопросы, благодарность"]];
+const base=location.pathname.replace(/efir\d\/?(index\.html)?$/,'');
 S.forEach(s=>{const i=new Image();i.src=base+s[0]});
 let i=0;try{i=+localStorage.getItem('efir3')||0}catch(e){}
 const show=()=>{i=Math.max(0,Math.min(S.length-1,i));img.src=base+S[i][0];cap.textContent=(i+1)+' / '+S.length+' · '+S[i][1];try{localStorage.setItem('efir3',i)}catch(e){}};
